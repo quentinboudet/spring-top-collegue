@@ -7,6 +7,8 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.BindException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -16,7 +18,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import dev.entite.Avis;
+import dev.entite.AvisType;
 import dev.entite.Collegue;
+import dev.repository.AvisRepository;
 import dev.repository.ColleguesRepository;
 
 @Component
@@ -26,6 +31,9 @@ public class ColleguesController {
 	
 	@Autowired
 	ColleguesRepository colR;
+	
+	@Autowired
+	AvisRepository avisR;
 
 	@Transactional
 	@GetMapping
@@ -51,29 +59,35 @@ public class ColleguesController {
 	
 	@PostMapping
 	@ResponseBody
-	public String ajoutCollegue(@RequestBody Collegue collegue) {
+	public Collegue ajoutCollegue(@RequestBody Collegue collegue) {
 		colR.save(collegue);
 		
-		return "ok";
+		return collegue;
 	}
 	
 	@PatchMapping(value="/{pseudo}")
 	@ResponseBody
-	public Collegue noterCollegue(@RequestBody Map<String, String> note, @PathVariable String pseudo) {
+	public Collegue noterCollegue(@RequestBody Map<String, String> note, @PathVariable String pseudo) throws BindException {
 		Collegue c = colR.findByPseudo(pseudo);
 		if(note.containsKey("action")) {
 			String n = note.get("action");
 			int score = c.getScore();
+			Avis avis; 
+			
 			if("aimer".equals(n)) {
 				c.setScore(score+10);
+				avis = new Avis(AvisType.aimer, c.getScore(), c);
 			}
 			else if("detester".equals(n)) {
 				c.setScore(score-5);
+				avis = new Avis(AvisType.detester, c.getScore(), c);
 			}
 			else {
+				throw new BindException(note, "Veillez donner en parametre 'aimer' ou 'detester'");
 //				return "Veillez donner en parametre 'aimer' ou 'detester'";
 			}
 			colR.save(c);
+			avisR.save(avis);
 		}
 
 		return c;

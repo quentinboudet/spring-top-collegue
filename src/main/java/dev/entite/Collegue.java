@@ -24,9 +24,14 @@ public class Collegue {
 	private int score;
 
 	public Collegue(String pseudo, String imageUrl, int score) {
+		this(pseudo, imageUrl);
+		this.score = score;
+	}
+
+	public Collegue(String pseudo, String imageUrl) {
 		this.pseudo = pseudo;
 		this.imageUrl = imageUrl;
-		this.score = score;
+		this.score = 0;
 	}
 	
 	public Collegue() {
